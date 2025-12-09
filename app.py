@@ -29,7 +29,7 @@ templates = Jinja2Templates(directory="templates")
 
 # --- 3. Model and Tokenizer Loading 
 # Define paths relative to this script file
-model_path = os.path.join(os.path.dirname(__file__), "model", "fake_news_detection_model.keras")
+model_path = os.path.join(os.path.dirname(__file__), "model", "news_detection_model.keras")
 tokenizer_path = os.path.join(os.path.dirname(__file__), "tokenizer", "tokenizer.pkl")
 
 model = None
