@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Analyzer | NLP Project</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .card { background-color: white; box-shadow: 0 15px 40px rgba(0,0,0,0.15); max-width: 900px; width: 100%; }
+        .result-container { transition: all 0.5s cubic-bezier(0.175,0.885,0.32,1.275); transform: translateY(20px); opacity: 0; height: 0; overflow: hidden; padding:0 2rem; }
+        .result-container.show { transform: translateY(0); opacity:1; height:auto; padding:1.5rem 2rem; margin-top:1.5rem; }
+    </style>
+</head>
+<body>
+<div class="card p-8 md:p-12 rounded-3xl">
+    <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">📰 Fake News Analyzer</h1>
+    <p class="text-gray-500 mb-10 text-lg">Check your article is Real or Fake.</p>
+    
+    <form id="predictionForm" onsubmit="handlePrediction(event)">
+        <div class="mb-6">
+            <label for="title" class="block text-base font-semibold text-gray-700 mb-2">Article Title</label>
+            <input type="text" id="title" name="title" required placeholder="Enter the headline" class="w-full p-4 border-2 border-gray-300 rounded-xl">
+        </div>
+        <div class="mb-8">
+            <label for="text" class="block text-base font-semibold text-gray-700 mb-2">Article Body Text</label>
+            <textarea id="text" name="text" rows="10" required placeholder="Paste the complete text here..." class="w-full p-4 border-2 border-gray-300 rounded-xl resize-y"></textarea>
+        </div>
+        <button type="submit" id="submitButton" class="w-full bg-blue-600 text-white font-extrabold text-lg py-4 rounded-xl flex items-center justify-center">
+            <span id="buttonText">Classify Article</span>
+            <svg id="loadingSpinner" class="animate-spin -ml-1 mr-3 h-6 w-6 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        </button>
+    </form>
+
+    <div id="resultContainer" class="result-container text-white rounded-xl">
+        <h2 id="resultHeading" class="text-3xl font-extrabold mb-1"></h2>
+        <p id="resultProbability" class="text-md opacity-90"></p>
+    </div>
+</div>
+
+<script>
+    // API_URL '/predict' hai, jo app.py ke @app.post("/predict") se match karta hai.
+    const API_URL = '/predict'; 
+    const resultContainer = document.getElementById('resultContainer');
+    const resultHeading = document.getElementById('resultHeading');
+    const resultProbability = document.getElementById('resultProbability');
+    const submitButton = document.getElementById('submitButton');
+    const buttonText = document.getElementById('buttonText');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+
+    function showLoading(isLoading){
+        submitButton.disabled = isLoading;
+        loadingSpinner.classList.toggle('hidden', !isLoading);
+        buttonText.textContent = isLoading ? 'Analyzing...' : 'Classify Article';
+    }
+
+    function displayResult(prediction, probability){
+        let bgColor = prediction==="Real News" ? 'bg-green-600':'bg-red-600';
+        let label = prediction==="Real News" ? 'REAL NEWS':'FAKE NEWS';
+        const probPercent = (probability*100).toFixed(2);
+        
+        resultContainer.classList.remove('show');
+        
+        setTimeout(()=>{
+            resultContainer.className = 'result-container '+bgColor;
+            resultHeading.textContent=`Predict: ${label}`;
+            resultProbability.textContent=`Confidence: ${probPercent}% (Score: ${probability.toFixed(4)})`;
+            setTimeout(()=>{ resultContainer.classList.add('show'); },50);
+        },500);
+    }
+
+    async function handlePrediction(event){
+        event.preventDefault(); showLoading(true);
+        const title=document.getElementById('title').value;
+        const text=document.getElementById('text').value;
+        
+        // Data format: Client JSON data bhej raha hai
+        try{
+            const response = await fetch(API_URL,{
+                method:'POST', // Yahi method app.py ke @app.post("/predict") se match honi chahiye.
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({title,text})
+            });
+            
+            if(!response.ok){
+                // Agar server 405 ya 500 bhejta hai, toh yahan catch hoga.
+                const errorData = await response.json().catch(() => ({detail: 'No specific error message'}));
+                throw new Error(`Server Error (${response.status}): ${errorData.detail || 'Unknown Error'}`);
+            }
+            
+            const result = await response.json();
+            displayResult(result.Prediction,result.Probability);
+            
+        }catch(e){ 
+            // Agar 405 aa raha hai, toh is 'e.message' mein dikhega.
+            alert("API Connection Failed: "+e.message);
+        }
+        finally{showLoading(false);}
+    }
+</script>
+</body>
+</html>
