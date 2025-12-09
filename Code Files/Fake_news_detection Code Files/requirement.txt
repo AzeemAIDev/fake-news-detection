@@ -1,6 +1,0 @@
-fastapi
-uvicorn
-pydantic
-numpy
-tensorflow==2.16.1
-nltk
