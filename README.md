@@ -88,12 +88,8 @@ pip install -r requirements.txt
 <hr>
 
 <h2>▶️ How to Run</h2>
-<p>If the project has a Jupyter notebook:</p>
-<ul>
-<li>Open the notebook in the <code>notebooks/</code> folder</li>
-<li>Run all cells for preprocessing, training and evaluation</li>
-</ul>
-<p>If the project provides a script or API:</p>
+
+<p>Write into VS Code terminal:</p>
 <pre>
 uvicorn app:app --reload --port 8000
 </pre>
